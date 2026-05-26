@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AR Camera Test</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- 摄像头画面 -->
+  <video id="camera-feed" autoplay playsinline muted></video>
+
+  <!-- 提示文字 -->
+  <div id="message">
+    点击下方按钮，允许浏览器访问摄像头。手机上会优先调用后置摄像头。
+  </div>
+
+  <button id="start-button">Start AR Camera</button>
+
+  <!-- A-Frame 虚拟内容层 -->
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="alpha: true; antialias: true"
+    background="transparent: true"
+  >
+    <!-- 摄像机 -->
+    <a-camera position="0 1.6 0"></a-camera>
+
+    <!-- 虚拟特效 / 物体 -->
+    <a-box
+      position="-1 1 -4"
+      rotation="0 45 0"
+      color="#4CC3D9"
+      animation="property: rotation; to: 0 405 0; loop: true; dur: 4000; easing: linear"
+    ></a-box>
+
+    <a-sphere
+      position="0 1.4 -5"
+      radius="0.7"
+      color="#EF2D5E"
+      opacity="0.85"
+      transparent="true"
+      animation="property: position; dir: alternate; dur: 1800; loop: true; to: 0 2 -5; easing: easeInOutSine"
+    ></a-sphere>
+
+    <a-torus
+      position="1.2 1.2 -4"
+      radius="0.5"
+      radius-tubular="0.035"
+      color="#FFC65D"
+      animation="property: rotation; to: 360 360 0; loop: true; dur: 3000; easing: linear"
+    ></a-torus>
+
+    <!-- 灯光 -->
+    <a-light type="ambient" intensity="1"></a-light>
+    <a-light type="directional" position="2 4 3" intensity="1.2"></a-light>
+  </a-scene>
+
+  <!-- JS -->
+  <script src="script.js"></script>
+</body>
+</html>
