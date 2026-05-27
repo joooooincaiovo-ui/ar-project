@@ -81,6 +81,8 @@ function createParticles() {
 function activateEffect() {
   if (!markerVisible || effectActivated) return;
 
+  console.log("Particle effect activated.");
+
   effectActivated = true;
   effectRoot.setAttribute("visible", "true");
 
@@ -125,6 +127,8 @@ function resetEffect() {
 }
 
 marker.addEventListener("markerFound", () => {
+  console.log("Hiro marker found.");
+
   markerVisible = true;
   statusText.textContent = "已识别到图案，正在激活……";
 
@@ -136,6 +140,8 @@ marker.addEventListener("markerFound", () => {
 });
 
 marker.addEventListener("markerLost", () => {
+  console.log("Hiro marker lost.");
+
   markerVisible = false;
   statusText.textContent = "图案丢失，请重新对准 Hiro Marker";
 
