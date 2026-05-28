@@ -8,8 +8,17 @@ let markerVisible = false;
 let activationTimer = null;
 let effectActivated = false;
 
-const PARTICLE_COUNT = 180;
 const ACTIVATION_DELAY = 2000;
+
+// 粒子环参数
+const RING_COUNT = 8;              // 有多少层粒子环
+const PARTICLES_PER_RING = 28;     // 每一圈有多少粒子
+const MAX_HEIGHT = 2.5;            // 粒子最高上升高度
+const BASE_RADIUS = 0.45;          // 最内圈半径
+const RADIUS_STEP = 0.22;          // 每一圈向外扩大的距离
+
+let particleData = [];
+let animationStarted = false;
 
 function randomBetween(min, max) {
   return Math.random() * (max - min) + min;
@@ -17,68 +26,95 @@ function randomBetween(min, max) {
 
 function createParticles() {
   particleField.innerHTML = "";
+  particleData = [];
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const particle = document.createElement("a-sphere");
+  for (let ringIndex = 0; ringIndex < RING_COUNT; ringIndex++) {
+    const ringRadius = BASE_RADIUS + ringIndex * RADIUS_STEP;
 
-    const angle = randomBetween(0, Math.PI * 2);
+    for (let i = 0; i < PARTICLES_PER_RING; i++) {
+      const particle = document.createElement("a-sphere");
 
-    // 扩大粒子扩散范围
-    const startRadius = randomBetween(0.05, 0.25);
-    const endRadius = randomBetween(2.2, 5.5);
+      const angle = (Math.PI * 2 * i) / PARTICLES_PER_RING;
 
-    const startX = Math.cos(angle) * startRadius;
-    const startZ = Math.sin(angle) * startRadius;
+      // 每一圈的初始高度略微错开，形成一层层上升的感觉
+      const baseY = 0.05 + ringIndex * 0.07;
 
-    const endX = Math.cos(angle) * endRadius;
-    const endZ = Math.sin(angle) * endRadius;
+      const size = randomBetween(0.012, 0.032);
 
-    // 增加高度范围，让粒子不仅贴着 marker，而是充满更大的空间
-    const startY = randomBetween(0.05, 0.35);
-    const endY = randomBetween(0.4, 3.5);
+      particle.setAttribute("radius", size);
+      particle.setAttribute("color", "#FFFFFF");
+      particle.setAttribute("opacity", randomBetween(0.45, 0.95).toFixed(2));
+      particle.setAttribute("transparent", "true");
 
-    // 粒子大小略微变化，但全部保持白色
-    const size = randomBetween(0.012, 0.04);
+      particleField.appendChild(particle);
 
-    // 扩散时间稍微拉长，让画面更像空间弥散
-    const duration = randomBetween(2600, 5200);
-    const delay = randomBetween(0, 1100);
+      particleData.push({
+        element: particle,
+        angle: angle,
+        radius: ringRadius,
 
-    particle.setAttribute("radius", size);
-    particle.setAttribute("color", "#FFFFFF");
-    particle.setAttribute("opacity", randomBetween(0.45, 0.95).toFixed(2));
-    particle.setAttribute("transparent", "true");
+        // 越外圈旋转越慢一点，画面会更自然
+        orbitSpeed: randomBetween(0.18, 0.42) * (ringIndex % 2 === 0 ? 1 : -1),
 
-    particle.setAttribute("position", `${startX} ${startY} ${startZ}`);
+        // 上升速度
+        riseSpeed: randomBetween(0.12, 0.26),
 
-    particle.setAttribute(
-      "animation__spread",
-      `
-        property: position;
-        from: ${startX} ${startY} ${startZ};
-        to: ${endX} ${endY} ${endZ};
-        dur: ${duration};
-        delay: ${delay};
-        easing: easeOutCubic;
-        loop: true
-      `
-    );
+        // 初始高度
+        y: baseY,
 
-    particle.setAttribute(
-      "animation__fade",
-      `
-        property: opacity;
-        from: 0.95;
-        to: 0;
-        dur: ${duration};
-        delay: ${delay};
-        easing: easeOutQuad;
-        loop: true
-      `
-    );
+        // 每个粒子的高度相位，让它们不是整齐地一起上下
+        waveOffset: randomBetween(0, Math.PI * 2),
 
-    particleField.appendChild(particle);
+        // 透明度闪烁速度
+        shimmerSpeed: randomBetween(1.2, 2.8)
+      });
+    }
   }
+
+  if (!animationStarted) {
+    animationStarted = true;
+    animateParticles();
+  }
+}
+
+function animateParticles() {
+  requestAnimationFrame(animateParticles);
+
+  if (!effectActivated || !markerVisible) return;
+
+  const time = performance.now() * 0.001;
+
+  particleData.forEach((particle) => {
+    // 缓慢旋转
+    particle.angle += particle.orbitSpeed * 0.012;
+
+    // 缓慢上升
+    particle.y += particle.riseSpeed * 0.006;
+
+    // 到达最高点后回到底部，形成持续循环上升
+    if (particle.y > MAX_HEIGHT) {
+      particle.y = 0.05;
+    }
+
+    // 轻微呼吸感，让粒子不是死板的一圈
+    const breathingRadius =
+      particle.radius + Math.sin(time * 1.2 + particle.waveOffset) * 0.035;
+
+    const x = Math.cos(particle.angle) * breathingRadius;
+    const z = Math.sin(particle.angle) * breathingRadius;
+
+    // 上升过程中附加一点点波浪漂浮
+    const y =
+      particle.y + Math.sin(time * 1.6 + particle.waveOffset) * 0.06;
+
+    particle.element.object3D.position.set(x, y, z);
+
+    // 轻微闪烁
+    const opacity =
+      0.45 + Math.sin(time * particle.shimmerSpeed + particle.waveOffset) * 0.28;
+
+    particle.element.setAttribute("opacity", Math.max(0.18, opacity).toFixed(2));
+  });
 }
 
 function activateEffect() {
@@ -89,30 +125,24 @@ function activateEffect() {
   effectActivated = true;
   effectRoot.setAttribute("visible", "true");
 
-  statusText.textContent = "图案已激活：粒子正在扩散";
+  statusText.textContent = "图案已激活：白色粒子正在环绕上升";
 
   createParticles();
 
-  pulseRing.setAttribute(
-    "animation__scale",
-    `
-      property: scale;
-      from: 0.4 0.4 0.4;
-      to: 3.2 3.2 3.2;
-      dur: 1800;
-      easing: easeOutQuad;
-      loop: true
-    `
-  );
+  // 不再让 pulse-ring 向外爆炸扩散，只保留一个轻微旋转的中心环
+  pulseRing.removeAttribute("animation__scale");
+  pulseRing.removeAttribute("animation__opacity");
+
+  pulseRing.setAttribute("scale", "1.15 1.15 1.15");
+  pulseRing.setAttribute("opacity", "0.32");
 
   pulseRing.setAttribute(
-    "animation__opacity",
+    "animation__rotate",
     `
-      property: opacity;
-      from: 0.5;
-      to: 0;
-      dur: 1800;
-      easing: easeOutQuad;
+      property: rotation;
+      to: -90 0 360;
+      dur: 4800;
+      easing: linear;
       loop: true
     `
   );
@@ -121,10 +151,14 @@ function activateEffect() {
 function resetEffect() {
   effectActivated = false;
   effectRoot.setAttribute("visible", "false");
+
   particleField.innerHTML = "";
+  particleData = [];
 
   pulseRing.removeAttribute("animation__scale");
   pulseRing.removeAttribute("animation__opacity");
+  pulseRing.removeAttribute("animation__rotate");
+
   pulseRing.setAttribute("scale", "1 1 1");
   pulseRing.setAttribute("opacity", "0.45");
 }
