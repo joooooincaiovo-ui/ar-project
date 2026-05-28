@@ -8,7 +8,7 @@ let markerVisible = false;
 let activationTimer = null;
 let effectActivated = false;
 
-const PARTICLE_COUNT = 56;
+const PARTICLE_COUNT = 180;
 const ACTIVATION_DELAY = 2000;
 
 function randomBetween(min, max) {
@@ -21,9 +21,11 @@ function createParticles() {
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const particle = document.createElement("a-sphere");
 
-    const angle = (Math.PI * 2 * i) / PARTICLE_COUNT;
-    const startRadius = randomBetween(0.05, 0.16);
-    const endRadius = randomBetween(0.8, 1.75);
+    const angle = randomBetween(0, Math.PI * 2);
+
+    // 扩大粒子扩散范围
+    const startRadius = randomBetween(0.05, 0.25);
+    const endRadius = randomBetween(2.2, 5.5);
 
     const startX = Math.cos(angle) * startRadius;
     const startZ = Math.sin(angle) * startRadius;
@@ -31,19 +33,20 @@ function createParticles() {
     const endX = Math.cos(angle) * endRadius;
     const endZ = Math.sin(angle) * endRadius;
 
-    const startY = randomBetween(0.08, 0.28);
-    const endY = randomBetween(0.12, 0.95);
+    // 增加高度范围，让粒子不仅贴着 marker，而是充满更大的空间
+    const startY = randomBetween(0.05, 0.35);
+    const endY = randomBetween(0.4, 3.5);
 
-    const size = randomBetween(0.012, 0.035);
-    const duration = randomBetween(1800, 3600);
-    const delay = randomBetween(0, 700);
+    // 粒子大小略微变化，但全部保持白色
+    const size = randomBetween(0.012, 0.04);
 
-    const colorList = ["#FFFFFF", "#9DEBFF", "#B6A8FF", "#FFE8A3"];
-    const color = colorList[Math.floor(Math.random() * colorList.length)];
+    // 扩散时间稍微拉长，让画面更像空间弥散
+    const duration = randomBetween(2600, 5200);
+    const delay = randomBetween(0, 1100);
 
     particle.setAttribute("radius", size);
-    particle.setAttribute("color", color);
-    particle.setAttribute("opacity", randomBetween(0.55, 0.95).toFixed(2));
+    particle.setAttribute("color", "#FFFFFF");
+    particle.setAttribute("opacity", randomBetween(0.45, 0.95).toFixed(2));
     particle.setAttribute("transparent", "true");
 
     particle.setAttribute("position", `${startX} ${startY} ${startZ}`);
