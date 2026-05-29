@@ -10,12 +10,11 @@ let effectActivated = false;
 
 const ACTIVATION_DELAY = 2000;
 
-// 粒子环参数
-const RING_COUNT = 8;              // 有多少层粒子环
-const PARTICLES_PER_RING = 28;     // 每一圈有多少粒子
-const MAX_HEIGHT = 2.5;            // 粒子最高上升高度
-const BASE_RADIUS = 0.45;          // 最内圈半径
-const RADIUS_STEP = 0.22;          // 每一圈向外扩大的距离
+const RING_COUNT = 7;
+const PARTICLES_PER_RING = 28;
+const MAX_HEIGHT = 1.8;
+const BASE_RADIUS = 0.18;
+const RADIUS_STEP = 0.07;
 
 let particleData = [];
 let animationStarted = false;
@@ -35,11 +34,8 @@ function createParticles() {
       const particle = document.createElement("a-sphere");
 
       const angle = (Math.PI * 2 * i) / PARTICLES_PER_RING;
-
-      // 每一圈的初始高度略微错开，形成一层层上升的感觉
-      const baseY = 0.05 + ringIndex * 0.07;
-
-      const size = randomBetween(0.012, 0.032);
+      const baseZ = 0.03 + ringIndex * 0.04;
+      const size = randomBetween(0.006, 0.016);
 
       particle.setAttribute("radius", size);
       particle.setAttribute("color", "#FFFFFF");
@@ -52,20 +48,10 @@ function createParticles() {
         element: particle,
         angle: angle,
         radius: ringRadius,
-
-        // 越外圈旋转越慢一点，画面会更自然
         orbitSpeed: randomBetween(0.18, 0.42) * (ringIndex % 2 === 0 ? 1 : -1),
-
-        // 上升速度
-        riseSpeed: randomBetween(0.12, 0.26),
-
-        // 初始高度
-        y: baseY,
-
-        // 每个粒子的高度相位，让它们不是整齐地一起上下
+        riseSpeed: randomBetween(0.08, 0.18),
+        z: baseZ,
         waveOffset: randomBetween(0, Math.PI * 2),
-
-        // 透明度闪烁速度
         shimmerSpeed: randomBetween(1.2, 2.8)
       });
     }
@@ -85,31 +71,23 @@ function animateParticles() {
   const time = performance.now() * 0.001;
 
   particleData.forEach((particle) => {
-    // 缓慢旋转
     particle.angle += particle.orbitSpeed * 0.012;
+    particle.z += particle.riseSpeed * 0.006;
 
-    // 缓慢上升
-    particle.y += particle.riseSpeed * 0.006;
-
-    // 到达最高点后回到底部，形成持续循环上升
-    if (particle.y > MAX_HEIGHT) {
-      particle.y = 0.05;
+    if (particle.z > MAX_HEIGHT) {
+      particle.z = 0.03;
     }
 
-    // 轻微呼吸感，让粒子不是死板的一圈
     const breathingRadius =
-      particle.radius + Math.sin(time * 1.2 + particle.waveOffset) * 0.035;
+      particle.radius + Math.sin(time * 1.2 + particle.waveOffset) * 0.018;
 
     const x = Math.cos(particle.angle) * breathingRadius;
-    const z = Math.sin(particle.angle) * breathingRadius;
-
-    // 上升过程中附加一点点波浪漂浮
-    const y =
-      particle.y + Math.sin(time * 1.6 + particle.waveOffset) * 0.06;
+    const y = Math.sin(particle.angle) * breathingRadius;
+    const z =
+      particle.z + Math.sin(time * 1.6 + particle.waveOffset) * 0.03;
 
     particle.element.object3D.position.set(x, y, z);
 
-    // 轻微闪烁
     const opacity =
       0.45 + Math.sin(time * particle.shimmerSpeed + particle.waveOffset) * 0.28;
 
@@ -120,7 +98,7 @@ function animateParticles() {
 function activateEffect() {
   if (!markerVisible || effectActivated) return;
 
-  console.log("Particle effect activated.");
+  console.log("Image target effect activated.");
 
   effectActivated = true;
   effectRoot.setAttribute("visible", "true");
@@ -129,18 +107,14 @@ function activateEffect() {
 
   createParticles();
 
-  // 不再让 pulse-ring 向外爆炸扩散，只保留一个轻微旋转的中心环
-  pulseRing.removeAttribute("animation__scale");
-  pulseRing.removeAttribute("animation__opacity");
-
   pulseRing.setAttribute("scale", "1.15 1.15 1.15");
-  pulseRing.setAttribute("opacity", "0.32");
+  pulseRing.setAttribute("opacity", "0.28");
 
   pulseRing.setAttribute(
     "animation__rotate",
     `
       property: rotation;
-      to: -90 0 360;
+      to: 0 0 360;
       dur: 4800;
       easing: linear;
       loop: true
@@ -155,16 +129,13 @@ function resetEffect() {
   particleField.innerHTML = "";
   particleData = [];
 
-  pulseRing.removeAttribute("animation__scale");
-  pulseRing.removeAttribute("animation__opacity");
   pulseRing.removeAttribute("animation__rotate");
-
   pulseRing.setAttribute("scale", "1 1 1");
-  pulseRing.setAttribute("opacity", "0.45");
+  pulseRing.setAttribute("opacity", "0.28");
 }
 
-marker.addEventListener("markerFound", () => {
-  console.log("Hiro marker found.");
+marker.addEventListener("targetFound", () => {
+  console.log("Image target found.");
 
   markerVisible = true;
   statusText.textContent = "已识别到图案，正在激活……";
@@ -176,11 +147,11 @@ marker.addEventListener("markerFound", () => {
   }, ACTIVATION_DELAY);
 });
 
-marker.addEventListener("markerLost", () => {
-  console.log("Hiro marker lost.");
+marker.addEventListener("targetLost", () => {
+  console.log("Image target lost.");
 
   markerVisible = false;
-  statusText.textContent = "图案丢失，请重新对准 Hiro Marker";
+  statusText.textContent = "图案丢失，请重新对准识别图案";
 
   clearTimeout(activationTimer);
   resetEffect();

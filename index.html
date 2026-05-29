@@ -8,48 +8,51 @@
     content="width=device-width, initial-scale=1.0, user-scalable=no"
   />
 
-  <title>AR Marker Particle Effect</title>
+  <title>MindAR Particle Effect</title>
 
-  <!-- 稳定版 A-Frame + AR.js -->
-  <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/3.3.2/aframe/build/aframe-ar.js"></script>
+  <!-- A-Frame：换成 unpkg 地址 -->
+  <script src="https://unpkg.com/aframe@1.5.0/dist/aframe-master.min.js"></script>
+
+  <!-- MindAR：换成 unpkg 地址 -->
+  <script src="https://unpkg.com/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div id="ui-panel">
-    <div id="status">请将摄像头对准 Hiro Marker</div>
-    <div id="hint">识别到图案 2 秒后，粒子会从中心向外扩散。</div>
+    <div id="status">请将摄像头对准你的识别图案</div>
+    <div id="hint">识别到图案 2 秒后，白色粒子会环绕上升。</div>
   </div>
 
   <a-scene
-    embedded
+    mindar-image="imageTargetSrc: ./targets/targets.mind; autoStart: true;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: false; alpha: true"
     vr-mode-ui="enabled: false"
-    renderer="alpha: true; antialias: true; precision: mediump;"
-    arjs="
-      sourceType: webcam;
-      sourceWidth: 1280;
-      sourceHeight: 720;
-      displayWidth: 1280;
-      displayHeight: 720;
-      debugUIEnabled: false;
-      detectionMode: mono;
-    "
+    device-orientation-permission-ui="enabled: false"
+    embedded
   >
-    <a-marker id="marker" preset="hiro">
-      <a-entity id="effect-root" visible="false">
+    <a-assets></a-assets>
 
-        
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled: false"
+    ></a-camera>
+
+    <!-- targetIndex: 0 表示识别 targets.mind 里的第一个图案 -->
+    <a-entity id="marker" mindar-image-target="targetIndex: 0">
+
+      <a-entity id="effect-root" visible="false">
 
         <a-ring
           id="pulse-ring"
-          position="0 0.025 0"
-          rotation="-90 0 0"
-          radius-inner="0.35"
-          radius-outer="0.37"
+          position="0 0 0.02"
+          rotation="0 0 0"
+          radius-inner="0.32"
+          radius-outer="0.34"
           color="#FFFFFF"
-          opacity="0.45"
+          opacity="0.28"
           transparent="true"
         ></a-ring>
 
@@ -57,18 +60,17 @@
 
         <a-sphere
           id="core-orb"
-          position="0 0.55 0"
-          radius="0.08"
+          position="0 0 0.45"
+          radius="0.035"
           color="#FFFFFF"
-          opacity="0.9"
+          opacity="0.85"
           transparent="true"
-          animation="property: position; dir: alternate; to: 0 0.75 0; loop: true; dur: 1400; easing: easeInOutSine"
+          animation="property: position; dir: alternate; to: 0 0 0.62; loop: true; dur: 1400; easing: easeInOutSine"
         ></a-sphere>
 
       </a-entity>
-    </a-marker>
 
-    <a-entity camera></a-entity>
+    </a-entity>
   </a-scene>
 
   <script src="script.js"></script>
